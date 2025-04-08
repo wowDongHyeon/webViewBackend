@@ -26,4 +26,9 @@ public class AttendanceService {
         
         return attendanceRepository.save(attendance);
     }
+
+    @Transactional(readOnly = true)
+    public Long getAttendanceCount(String lectureName, String classTime) {
+        return attendanceRepository.countAttendanceByLectureAndTime(lectureName, classTime);
+    }
 } 
