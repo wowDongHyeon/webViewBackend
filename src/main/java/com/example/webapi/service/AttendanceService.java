@@ -2,7 +2,10 @@ package com.example.webapi.service;
 
 import com.example.webapi.entity.Attendance;
 import com.example.webapi.repository.AttendanceRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +16,11 @@ import java.time.LocalDateTime;
 public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+
+    @Value("${spring.kafka.producer.topic}")
+    private String topic;
 
     @Transactional
     public Attendance checkAttendance(Attendance attendance) {
@@ -24,7 +32,18 @@ public class AttendanceService {
             attendance.setStatus("미정");
         }
         
-        return attendanceRepository.save(attendance);
+        Attendance savedAttendance = attendanceRepository.save(attendance);
+        
+        // Send message to Kafka
+        try {
+            String message = objectMapper.writeValueAsString(savedAttendance);
+            kafkaTemplate.send(topic, message);
+        } catch (Exception e) {
+            // Log error but don't throw it to prevent transaction rollback
+            e.printStackTrace();
+        }
+        
+        return savedAttendance;
     }
 
     @Transactional(readOnly = true)
