@@ -18,7 +18,7 @@ public class AttendanceController {
     public ResponseEntity<?> checkAttendance(@RequestBody Attendance attendance) {
         try {
             Attendance savedAttendance = attendanceService.checkAttendance(attendance);
-            System.out.println("getuuid: " + attendance.getUuid());
+            // System.out.println("getuuid: " + attendance.getUuid());
             return ResponseEntity.ok(savedAttendance);
         } catch (RuntimeException e) {
             return ResponseEntity.internalServerError().body("Failed to process attendance: " + e.getMessage());
