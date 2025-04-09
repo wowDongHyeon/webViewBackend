@@ -15,10 +15,14 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     @PostMapping("/check")
-    public ResponseEntity<Attendance> checkAttendance(@RequestBody Attendance attendance) {
-        Attendance savedAttendance = attendanceService.checkAttendance(attendance);
-        System.out.println("getTestSeq: " + attendance.getTestSeq());
-        return ResponseEntity.ok(savedAttendance);
+    public ResponseEntity<?> checkAttendance(@RequestBody Attendance attendance) {
+        try {
+            Attendance savedAttendance = attendanceService.checkAttendance(attendance);
+            System.out.println("getuuid: " + attendance.getUuid());
+            return ResponseEntity.ok(savedAttendance);
+        } catch (RuntimeException e) {
+            return ResponseEntity.internalServerError().body("Failed to process attendance: " + e.getMessage());
+        }
     }
 
     @PostMapping("/count")

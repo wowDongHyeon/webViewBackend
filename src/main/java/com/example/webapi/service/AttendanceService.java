@@ -1,21 +1,27 @@
 package com.example.webapi.service;
 
 import com.example.webapi.entity.Attendance;
+import com.example.webapi.entity.TempAttendance;
 import com.example.webapi.repository.AttendanceRepository;
+import com.example.webapi.repository.TempAttendanceRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
 public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
+    private final TempAttendanceRepository tempAttendanceRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
@@ -32,15 +38,32 @@ public class AttendanceService {
             attendance.setStatus("미정");
         }
         
-        // Attendance savedAttendance = attendanceRepository.save(attendance);
-        
         // Send message to Kafka
         try {
             String message = objectMapper.writeValueAsString(attendance);
-            kafkaTemplate.send(topic, message);
+            System.out.println("message: " + message);
+            CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, message);
+            
+            // Wait for the send operation to complete
+            SendResult<String, String> result = future.get();
+            
+            // If we get here, the message was sent successfully
+            TempAttendance tempAttendance = new TempAttendance();
+            tempAttendance.setLectureName(attendance.getLectureName());
+            tempAttendance.setClassroom(attendance.getClassroom());
+            tempAttendance.setClassTime(attendance.getClassTime());
+            tempAttendance.setDate(attendance.getDate());
+            tempAttendance.setStatus(attendance.getStatus());
+            tempAttendance.setCheckTime(attendance.getCheckTime());
+            tempAttendance.setStudentName(attendance.getStudentName());
+            tempAttendance.setTestSeq(attendance.getTestSeq());
+            tempAttendance.setUuid(attendance.getUuid());
+            
+            tempAttendanceRepository.save(tempAttendance);
+            
         } catch (Exception e) {
-            // Log error but don't throw it to prevent transaction rollback
             e.printStackTrace();
+            throw new RuntimeException("Failed to send attendance data to Kafka", e);
         }
         
         return attendance;
