@@ -41,4 +41,7 @@ public class Attendance {
 
     @Column(name = "student_name", length = 100)
     private String studentName;
+
+    @Column(name = "test_seq")
+    private int testSeq;
 } 

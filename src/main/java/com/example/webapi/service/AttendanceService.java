@@ -32,18 +32,18 @@ public class AttendanceService {
             attendance.setStatus("미정");
         }
         
-        Attendance savedAttendance = attendanceRepository.save(attendance);
+        // Attendance savedAttendance = attendanceRepository.save(attendance);
         
         // Send message to Kafka
         try {
-            String message = objectMapper.writeValueAsString(savedAttendance);
+            String message = objectMapper.writeValueAsString(attendance);
             kafkaTemplate.send(topic, message);
         } catch (Exception e) {
             // Log error but don't throw it to prevent transaction rollback
             e.printStackTrace();
         }
         
-        return savedAttendance;
+        return attendance;
     }
 
     @Transactional(readOnly = true)

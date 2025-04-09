@@ -17,6 +17,7 @@ public class AttendanceController {
     @PostMapping("/check")
     public ResponseEntity<Attendance> checkAttendance(@RequestBody Attendance attendance) {
         Attendance savedAttendance = attendanceService.checkAttendance(attendance);
+        System.out.println("getTestSeq: " + attendance.getTestSeq());
         return ResponseEntity.ok(savedAttendance);
     }
 
